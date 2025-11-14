@@ -1,249 +1,600 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой сайт на GitHub</title>
+    <title>ArBrowser — Браузер нового поколения</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #e2e8f0;
+            --text-light: #94a3b8;
+            --primary: #00d4ff;
+            --accent: #7c3aed;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 8px 25px rgba(0,0,0,0.3);
+            --shadow-lg: 0 20px 50px rgba(0,0,0,0.4);
+            --border: rgba(0, 212, 255, 0.15);
         }
-        
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        [data-theme="light"] {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --primary: #00b4d8;
+            --accent: #5b21b6;
+            --border: rgba(0, 180, 216, 0.2);
+            --shadow: 0 8px 25px rgba(0,0,0,0.08);
+            --shadow-lg: 0 20px 50px rgba(0,0,0,0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
             min-height: 100vh;
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* === ПЛАВНАЯ СМЕНА ТЕМЫ (как iOS 26) === */
+        *, *::before, *::after {
+            transition: background 0.5s cubic-bezier(0.25, 0.8, 0.25, 1),
+                        color 0.5s cubic-bezier(0.25, 0.8, 0.25, 1),
+                        border-color 0.5s cubic-bezier(0.25, 0.8, 0.25, 1),
+                        box-shadow 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        
-        header {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 1rem 0;
+
+        /* === ЗАГРУЗКА macOS === */
+        .loader {
             position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-        }
-        
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: white;
-        }
-        
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
-        
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        
-        .nav-links a:hover {
-            color: #ffd700;
-        }
-        
-        .hero {
-            height: 100vh;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #000;
             display: flex;
             align-items: center;
             justify-content: center;
-            text-align: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        .loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .mac-spinner {
+            width: 70px; height: 70px;
+            border: 7px solid #1a1a1a;
+            border-top: 7px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.4);
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* === ПЕРЕКЛЮЧАТЕЛЬ ТЕМ === */
+        .theme-toggle {
+            position: fixed;
+            top: 20px; right: 20px;
+            z-index: 100;
+            background: var(--card);
+            padding: 8px;
+            border-radius: 50px;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 6px;
+            border: 1px solid var(--border);
+        }
+        .theme-btn {
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-light);
+        }
+        .theme-btn.active {
+            background: var(--primary);
             color: white;
         }
-        
-        .hero-content h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            animation: fadeInUp 1s ease;
-        }
-        
-        .hero-content p {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            animation: fadeInUp 1s ease 0.2s both;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 12px 30px;
-            background: #ffd700;
-            color: #333;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: transform 0.3s;
-            animation: fadeInUp 1s ease 0.4s both;
-        }
-        
-        .btn:hover {
-            transform: translateY(-3px);
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        section {
-            padding: 100px 0;
-            background: white;
-        }
-        
-        .section-title {
+
+        /* === ЗАГОЛОВОК === */
+        header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            padding: 110px 20px;
             text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 3rem;
-            color: #333;
+            border-radius: 0 0 40px 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
         }
-        
+        [data-theme="light"] header { background: linear-gradient(135deg, #e0f2fe, #bae6fd); }
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.12), transparent 70%);
+            animation: float 8s ease-in-out infinite;
+        }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        h1 {
+            font-size: 4.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fadeInUp 0.9s ease-out;
+        }
+        .subtitle {
+            font-size: 1.5rem;
+            margin: 22px 0 45px;
+            color: var(--text-light);
+            animation: fadeInUp 0.9s ease-out 0.2s both;
+        }
+        .download-btn {
+            padding: 20px 52px;
+            background: linear-gradient(135deg, var(--primary), #00a3cc);
+            color: white;
+            font-weight: 700;
+            font-size: 1.35rem;
+            border-radius: 50px;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.5);
+            transition: all 0.4s ease;
+            cursor: pointer;
+            border: none;
+        }
+        .download-btn:hover { transform: translateY(-7px); box-shadow: 0 0 50px rgba(0, 212, 255, 0.7); }
+
+        /* === ТАЙМЕР === */
+        .countdown-section {
+            text-align: center;
+            margin: 80px 0;
+            padding: 30px;
+            background: var(--card);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        .countdown-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        .countdown-timer {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--warning);
+            margin: 15px 0;
+        }
+        .progress-container {
+            height: 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            width: 0%;
+            border-radius: 6px;
+            transition: width 0.6s ease;
+        }
+
+        /* === СРАВНЕНИЕ === */
+        .comparison h2 {
+            text-align: center;
+            font-size: 2.6rem;
+            margin: 80px 0 50px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 50px;
+        }
+        .comparison-table th {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            padding: 22px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .comparison-table td {
+            padding: 18px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-light);
+        }
+        .comparison-table tr:hover { background: rgba(0, 212, 255, 0.05); }
+        .check { color: var(--success); font-weight: bold; }
+        .cross { color: var(--danger); font-weight: bold; }
+        .partial { color: var(--warning); }
+        .arbrowser { color: var(--primary); font-weight: 700; }
+
+        /* === ФИЧИ === */
         .features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 60px 0;
         }
-        
         .feature-card {
-            background: #f8f9fa;
-            padding: 2rem;
-            border-radius: 10px;
+            background: var(--card);
+            padding: 35px 25px;
+            border-radius: 24px;
             text-align: center;
-            transition: transform 0.3s;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
         }
-        
+        .feature-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
         .feature-card:hover {
             transform: translateY(-10px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
         }
-        
-        footer {
-            background: #333;
-            color: white;
+        .feature-card h3 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin: 16px 0;
+        }
+
+        /* === ПЛАТФОРМЫ === */
+        .platforms {
             text-align: center;
-            padding: 2rem 0;
+            margin: 80px 0;
+        }
+        .platforms a {
+            position: relative;
+            display: inline-block;
+            margin: 12px;
+            padding: 18px 36px;
+            background: rgba(30, 41, 59, 0.6);
+            color: #64748b;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: not-allowed;
+            opacity: 0.6;
+            pointer-events: none;
+            border: 1px dashed #475569;
+        }
+        .platforms a::before {
+            content: 'В разработке';
+            position: absolute;
+            top: -40px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--card);
+            color: var(--warning);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        .platforms a:hover::before {
+            opacity: 1;
+            visibility: visible;
+            top: -50px;
+        }
+
+        /* === ЦИТАТА === */
+        .quote {
+            text-align: center;
+            font-style: italic;
+            font-size: 1.35rem;
+            color: var(--text-light);
+            max-width: 900px;
+            margin: 90px auto;
+            padding: 40px;
+            background: var(--card);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        /* === ФУТЕР === */
+        footer {
+            background: #0a0e1a;
+            color: #64748b;
+            padding: 70px 20px;
+            text-align: center;
+            border-top: 1px solid #1e293b;
+        }
+        [data-theme="light"] footer { background: #f1f5f9; border-top: 1px solid #e2e8f0; }
+        .social-links a {
+            color: var(--primary);
+            margin: 0 20px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .social-links a:hover { color: var(--accent); text-decoration: underline; }
+
+        /* === МОДАЛКА (КРАСИВАЯ) === */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: rgba(10, 14, 26, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .modal.active {
+            display: flex;
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: var(--card);
+            padding: 50px 40px;
+            border-radius: 32px;
+            max-width: 540px;
+            width: 90%;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            transform: scale(0.85) translateY(30px);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .modal.active .modal-content {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+        .modal-icon {
+            font-size: 5.5rem;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+        .modal h3 {
+            font-size: 2.2rem;
+            margin: 20px 0;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .modal p {
+            color: var(--text-light);
+            margin: 16px 0;
+            font-size: 1.1rem;
+        }
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 24px;
+            font-size: 32px;
+            color: var(--text-light);
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .modal-close:hover {
+            background: var(--primary);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.8rem; }
+            .comparison-table { font-size: 0.85rem; }
+            .comparison-table th, .comparison-table td { padding: 10px 6px; }
+            .platforms a { display: block; margin: 15px auto; width: fit-content; }
+            .modal-content { padding: 40px 25px; }
         }
     </style>
 </head>
 <body>
+    <!-- ЗАГРУЗКА -->
+    <div class="loader" id="loader">
+        <div class="mac-spinner"></div>
+    </div>
+
+    <!-- ПЕРЕКЛЮЧАТЕЛЬ ТЕМ -->
+    <div class="theme-toggle">
+        <div class="theme-btn active" data-theme="dark">Тёмная</div>
+        <div class="theme-btn" data-theme="light">Светлая</div>
+    </div>
+
     <header>
         <div class="container">
-            <nav>
-                <div class="logo">МойСайт</div>
-                <ul class="nav-links">
-                    <li><a href="#home">Главная</a></li>
-                    <li><a href="#about">О нас</a></li>
-                    <li><a href="#services">Услуги</a></li>
-                    <li><a href="#contact">Контакты</a></li>
-                </ul>
-            </nav>
+            <h1>ArBrowser</h1>
+            <p class="subtitle">Браузер нового поколения для всех платформ</p>
+            <button class="download-btn" id="downloadBtn">Скачать ArBrowser</button>
         </div>
     </header>
 
-    <section id="home" class="hero">
-        <div class="hero-content">
-            <h1>Добро пожаловать на мой сайт</h1>
-            <p>Создано с помощью GitHub Pages</p>
-            <a href="#about" class="btn">Узнать больше</a>
-        </div>
-    </section>
-
-    <section id="about">
-        <div class="container">
-            <h2 class="section-title">О нас</h2>
-            <div class="features">
-                <div class="feature-card">
-                    <h3>🚀 Современные технологии</h3>
-                    <p>Используем передовые подходы в веб-разработке</p>
-                </div>
-                <div class="feature-card">
-                    <h3>💡 Креативные решения</h3>
-                    <p>Создаем уникальные и функциональные сайты</p>
-                </div>
-                <div class="feature-card">
-                    <h3>⚡ Быстрая работа</h3>
-                    <p>Оптимизированные и быстрые веб-страницы</p>
-                </div>
+    <section class="container">
+        <!-- ТАЙМЕР -->
+        <div class="countdown-section">
+            <h3 class="countdown-title">До официального релиза</h3>
+            <div class="countdown-timer" id="timer">00:00:00:00</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress"></div>
             </div>
+            <p style="color: var(--text-light); font-size: 0.95rem;">1 января 2026, 00:00:00 (МСК)</p>
+        </div>
+
+        <!-- СРАВНЕНИЕ -->
+        <div class="comparison">
+            <h2>Почему ArBrowser лучше?</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Критерий</th>
+                        <th class="arbrowser">ArBrowser</th>
+                        <th>Яндекс</th>
+                        <th>Edge</th>
+                        <th>Firefox</th>
+                        <th>Opera</th>
+                        <th>Chrome</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Полная приватность</td><td class="check">Да</td><td class="cross">Нет</td><td class="cross">Нет</td><td class="partial">Частично</td><td class="partial">Частично</td><td class="cross">Нет</td></tr>
+                    <tr><td>Без встроенной рекламы</td><td class="check">Да</td><td class="cross">Нет</td><td class="cross">Нет</td><td class="check">Да</td><td class="cross">Нет</td><td class="cross">Нет</td></tr>
+                    <tr><td>Открытый исходный код</td><td class="check">Да</td><td class="cross">Нет</td><td class="cross">Нет</td><td class="check">Да</td><td class="cross">Нет</td><td class="cross">Нет</td></tr>
+                    <tr><td>Не принадлежит корпорации</td><td class="check">Да</td><td class="cross">Нет</td><td class="cross">Нет</td><td class="check">Да</td><td class="cross">Нет</td><td class="cross">Нет</td></tr>
+                    <tr><td>Мгновенная загрузка</td><td class="check">Да</td><td class="partial">Частично</td><td class="check">Ди</td><td class="partial">Частично</td><td class="check">Да</td><td class="check">Да</td></tr>
+                    <tr><td>Поддержка всех платформ</td><td class="check">Да</td><td class="partial">Частично</td><td class="check">Да</td><td class="check">Да</td><td class="check">Да</td><td class="check">Да</td></tr>
+                    <tr><td>Встроенный VPN</td><td class="check">Да</td><td class="cross">Нет</td><td class="cross">Нет</td><td class="cross">Нет</td><td class="partial">Платно</td><td class="cross">Нет</td></tr>
+                    <tr><td>Экономия трафика</td><td class="check">Да</td><td class="partial">Частично</td><td class="cross">Нет</td><td class="cross">Нет</td><td class="check">Да</td><td class="cross">Нет</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ФИЧИ -->
+        <h2 class="section-title">Почему именно мы?</h2>
+        <div class="features">
+            <div class="feature-card"><h3>Максимальная скорость</h3><p>Оптимизированный движок, мгновенная загрузка.</p></div>
+            <div class="feature-card"><h3>Полная конфиденциальность</h3><p>Никаких трекеров, шифрование, ваш выбор.</p></div>
+            <div class="feature-card"><h3>Удобный интерфейс</h3><p>Кастомизация, темы, жесты, горячие клавиши.</p></div>
+        </div>
+
+        <!-- ПЛАТФОРМЫ -->
+        <div class="platforms">
+            <h3>Доступен на всех платформах</h3>
+            <a href="#">Для macOS</a>
+            <a href="#">Для Linux</a>
+            <a href="#">Для Windows</a>
+            <a href="#">Для iPhone</a>
+            <a href="#">Для Android</a>
+        </div>
+
+        <!-- ЦИТАТА -->
+        <div class="quote">
+            <p>"Мы создаем ArBrowser для людей, а не для корпораций. Наша цель — вернуть интернет в руки пользователей."</p>
         </div>
     </section>
 
-    <section id="services" style="background: #f8f9fa;">
+    <footer>
         <div class="container">
-            <h2 class="section-title">Наши услуги</h2>
-            <div class="features">
-                <div class="feature-card">
-                    <h3>🌐 Веб-разработка</h3>
-                    <p>Создание современных веб-сайтов и приложений</p>
-                </div>
-                <div class="feature-card">
-                    <h3>📱 Адаптивный дизайн</h3>
-                    <p>Сайты которые отлично работают на всех устройствах</p>
-                </div>
-                <div class="feature-card">
-                    <h3>🔧 Техническая поддержка</h3>
-                    <p>Постоянное обслуживание и обновление сайтов</p>
-                </div>
+            <p>Сделал Ткаченко Арсений © 2025</p>
+            <div class="social-links">
+                <a href="https://www.youtube.com/@ArBrowser" target="_blank">YouTube: @ArBrowser</a>
+                <a href="https://vk.com/arsholiday" target="_blank">ВК: Арсений Ткаченко</a>
+                <a href="https://vk.com/arbrowserofficial" target="_blank">ВК сообщество: ArBrowser</a>
             </div>
-        </div>
-    </section>
-
-    <footer id="contact">
-        <div class="container">
-            <h2>Свяжитесь с нами</h2>
-            <p>Email: contact@example.com</p>
-            <p>Телефон: +7 (999) 999-99-99</p>
-            <p>&copy; 2024 МойСайт. Все права защищены.</p>
         </div>
     </footer>
 
+    <!-- МОДАЛКА -->
+    <div class="modal" id="devModal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeModal">×</button>
+            <div class="modal-icon">В разработке</div>
+            <h3>ArBrowser в разработке!</h3>
+            <p>Релиз запланирован на <strong>1 января 2026</strong></p>
+            <p>Следите за новостями в соцсетях — запуск будет эпичным!</p>
+        </div>
+    </div>
+
     <script>
-        // Плавная прокрутка
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
+        // === ЗАГРУЗКА ===
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+            }, 1600);
         });
 
-        // Фиксированный хедер
-        window.addEventListener('scroll', function() {
-            const header = document.querySelector('header');
-            if (window.scrollY > 100) {
-                header.style.background = 'rgba(255, 255, 255, 0.95)';
-                header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-            } else {
-                header.style.background = 'rgba(255, 255, 255, 0.1)';
-                header.style.boxShadow = 'none';
-            }
+        // === ПЕРЕКЛЮЧАТЕЛЬ ТЕМ ===
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const theme = btn.getAttribute('data-theme');
+                document.documentElement.setAttribute('data-theme', theme);
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                try { localStorage.setItem('theme', theme); } catch(e) {}
+            });
         });
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.querySelector(`[data-theme="${savedTheme}"]`).classList.add('active');
+
+        // === ТАЙМЕР ===
+        const releaseDate = new Date('2026-01-01T00:00:00+03:00').getTime();
+        function updateTimer() {
+            const now = new Date().getTime();
+            const diff = releaseDate - now;
+            if (diff <= 0) {
+                document.getElementById('timer').textContent = 'Релиз!';
+                document.getElementById('progress').style.width = '100%';
+                return;
+            }
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            document.getElementById('timer').textContent = `${days}д ${hours}ч ${minutes}м ${seconds}с`;
+            const total = releaseDate - new Date('2025-01-01').getTime();
+            const elapsed = now - new Date('2025-01-01').getTime();
+            const percent = (elapsed / total) * 100;
+            document.getElementById('progress').style.width = `${Math.min(percent, 100)}%`;
+        }
+        setInterval(updateTimer, 1000);
+        updateTimer();
+
+        // === КОНФЕТТИ ===
+        function launchConfetti() {
+            confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 }, colors: ['#00d4ff', '#7c3aed', '#f59e0b'] });
+        }
+
+        // === МОДАЛКА ===
+        const modal = document.getElementById('devModal');
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            modal.classList.add('active');
+            setTimeout(launchConfetti, 400);
+        });
+        document.getElementById('closeModal').addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('active');
+        });
+
+        // === АНИМАЦИИ ===
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.feature-card').forEach(card => observer.observe(card));
     </script>
 </body>
 </html>
